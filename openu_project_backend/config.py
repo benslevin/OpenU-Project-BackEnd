@@ -14,8 +14,8 @@ TOKEN: Final = '6235208308:AAEpoDVVKMXFvsrOiG2_CZibVkEuc5Xx6Xg'
 # BOT name ro identify in group chats
 BOT_USERNAME: Final = '@MoneyMateIL_bot'
 
-#telegram info
-#TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+#DB info
+DB_PORT = os.environ.get("DB_PORT")
 
 #Commands
 class Command(Enum):

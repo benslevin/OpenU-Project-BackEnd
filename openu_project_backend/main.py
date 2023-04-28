@@ -1,3 +1,4 @@
+import uuid
 from openu_project_backend.Responses import responses, get_price, get_category
 from openu_project_backend.config import TOKEN, BOT_USERNAME, Category, Button, Status, Command
 from openu_project_backend.backend import get_group_total_expenses, add_row, piechart
@@ -84,7 +85,11 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Inform user about what this bot can do"""
     #admins = update.get_bot().get_chat_administrators(update.message.chat.id)
-    await update.message.reply_text("hi!")
+    await update.message.reply_text("Hey there!, \nThank you for added me, I will help you to track your expenses.")
+    await update.message.reply_text(f"Please each of you provide me your emails for login premissions to our UI, e.g:\n'/email sagivabu@gmail.com'")
+    group_auth = uuid.uuid4().split('-')[0]
+    await update.message.reply_text(f"your login auth is: {group_auth}")
+    #TODO: STOPPPED HERE
     
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Displays info on how to use the bot."""
