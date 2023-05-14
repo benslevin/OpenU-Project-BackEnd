@@ -15,7 +15,11 @@ TOKEN: Final = '6235208308:AAEpoDVVKMXFvsrOiG2_CZibVkEuc5Xx6Xg'
 BOT_USERNAME: Final = '@MoneyMateIL_bot'
 
 #DB info
-DB_PORT = os.environ.get("DB_PORT")
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_DATABASE_NAME = os.environ.get("DB_DATABASE_NAME", "postgres")
+DB_USER = os.environ.get("DB_USER", "sadna_admin")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "Password1")
+DB_PORT = os.environ.get("DB_PORT", "5432")
 
 #Commands
 class Command(Enum):
@@ -29,6 +33,7 @@ class Command(Enum):
     EXPORT = "export" #export the expenses of a given month as excel file
     STOP = "stop" #stops a recurring expense
     LINK = "link" #send fast UI link (NICE TO HAVE)
+    SIGN_IN = "email"
 
     
 

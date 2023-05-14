@@ -1,12 +1,19 @@
+import uuid
 import sqlite3
+import psycopg2
 import matplotlib.pyplot as plt
+from openu_project_backend import config
 
 class Database:
-    def __init__(self, db):
-        self.conn=sqlite3.connect(db)
-        self.cur=self.conn.cursor()
-        self.cur.execute("CREATE TABLE IF NOT EXISTS db (message_id integer PRIMARY KEY, group_id integer , group_name text, user_id text, user_name text, category text, price text)")
-        self.conn.commit()
+    def __init__(self):
+        self.conn = psycopg2.connect(
+            host =      config.DB_HOST,
+            database =  config.DB_DATABASE_NAME,
+            user =      config.DB_USER,
+            password =  config.DB_PASSWORD,
+            port =  int(config.DB_PORT))
+        
+        self.cur = self.conn.cursor()
 
 
     def insert(self, message_id, group_id, group_name, user_id, user_name, category, price):
@@ -56,7 +63,61 @@ class Database:
 
     def get_user_total_expenses(self, user_id):
         pass
-
+    
+    def create_group(self, group_id, group_name) -> int:
+        ''' create group in 'groups' table and return auth number '''
+        group_auth = f"{uuid.uuid4()}".split('-')[0][0:5] #generate first 5 numbers for UUID
+        
+        self.cur.execute(f"INSERT INTO groups (pk_id, group_name, auth) VALUES ({group_id}, {group_name}, {group_auth})")
+        self.conn.commit()
+        
+        return group_auth
+    
+    def create_user(self, user_id, user_name, email, is_admin) -> None:
+        ''' create user in 'users' table '''
+        self.cur.execute(f"INSERT INTO users (pk_id, user_name, email, is_admin) VALUES ({user_id}, {user_name}, {email}, {is_admin})")
+        self.conn.commit()
+    
+    def is_user_exists(self, user_id) -> tuple[bool, str]:
+        ''' Check if user exists.\n
+            Return (True, string of the details about the user) if exists,\n
+            Return (False, None) if not exists'''
+            
+        #check if user_id exists
+        self.cur.execute(f"select * from users where pk_id = {user_id}")
+        user = self.cur.fetchall() #return list of tuples
+        if user:
+            return True, f""+user
+        else:
+            return False, None
+        
+    def is_email_exists(self, email) -> bool:
+        ''' Check if email exists '''
+        #check if email exists #NOTE: stupid verification instead of googleAPI to prevent from UI to collapse because of 2 rows with identifiy emails
+        self.cur.execute(f"select * from users where email = {email}")
+        email = self.cur.fetchall() #return list of tuples
+        if email:
+            return True
+        else:
+            return False
+        
+    def create_usergroups(self, user_id, group_id, is_group_admin) -> None:
+        ''' create connection (row) in 'usergroups' table '''
+        self.cur.execute(f"INSERT INTO usergroups (fk_user_id, fk_group_id, role) VALUES ({user_id}, {group_id}, {is_group_admin})")
+        self.conn.commit()
+        
+    def is_usergroups_row_exists(self, user_id, group_id) -> bool:
+        ''' return True if user-group row is already exists '''
+        self.cur.execute(f"SELECT * FROM users WHERE user_id = {user_id} AND group_id = {group_id}")
+        row = self.cur.fetchall() #return list of tuples
+        if row:
+            return True
+        else:
+            return False
+        
+        
+        
+        
 
 def get_group_total_expenses():
     conn = sqlite3.connect('data.db')
