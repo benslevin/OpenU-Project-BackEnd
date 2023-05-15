@@ -94,12 +94,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     #create new row in 'groups' table
     group_id = update.message.chat.id #get group_id = chat_id
-    if update.message.chat.type == 'group':  #get group_name = chat_name / username (in private chat)
+    if update.message.chat.type == 'group':  #get group_name = chat_name / user name (in private chat)
         group_name = update.message.chat.title
     else:
-        group_name = update.message.chat.username
-        
-    group_auth_key = db.create_group(group_id=group_id, group_name=group_name)
+        group_name = update.message.chat.first_name
+    
+    if not db.is_group_exists(group_id): #if group not exists
+        group_auth_key = db.create_group(group_id=group_id, group_name=group_name)
+    else: #if group exists - get auth
+        group_auth_key = db.get_auth(group_id)
     
     # ~~ FIRST MESSAGE ~~ (welcome)
     await update.message.reply_text("Hey there!, \nThank you for added me, I will help you to track your expenses.")
@@ -132,16 +135,17 @@ async def email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     #get parameters of sender for new row in 'users' table
     sender_user_id = update.message.from_user.id
-    sender_user_name = update.message.from_user.username
-    sender_email = (update.message.text).strip() #get text (the email)
+    sender_user_name = update.message.from_user.name
+    sender_email = (update.message.text).split(Command.SIGN_IN.value)[1].strip() #get text (the email)
     #TODO: XXX: !NICE TO HAVE! verify email is correct 
     group_id = update.message.chat.id #get group_id = chat_id
 
     #verify user does not exists
     is_user_exists, user_info = db.is_user_exists(user_id=sender_user_id)
     if is_user_exists: #if already exists
-        if user_info[2] == sender_email: #and if he sent different email -> ask for changes
-            await update.message.reply_text(f'hey {update.message.from_user.first_name}, your user is already exists in our datebase with the email:\n{user_info}')
+        signed_email = user_info[0][2]
+        if signed_email == sender_email: #and if he sent different email -> ask for changes
+            await update.message.reply_text(f'hey {update.message.from_user.first_name}, your user is already exists in our datebase with the email:\n{signed_email}')
             #TODO: !NICE TO HAVE! would you like to change the email? (button of (Accept / Decline))
             #TODO: !NICE TO HAVE! NOAM - how to add button to accept changes
             
@@ -172,7 +176,7 @@ if __name__ == '__main__':
     app = Application.builder().token(TOKEN).build()
 
     # Commands
-    app.add_handler(CommandHandler(f"{Command.START.value}", (start,db)))
+    app.add_handler(CommandHandler(f"{Command.START.value}", start))
     app.add_handler(CommandHandler(f"{Command.HELP.value}", help_command))
     app.add_handler(CommandHandler(f"{Command.TOTAL_EXPENSES.value}", total_expenses))
     app.add_handler(CommandHandler(f"{Command.SIGN_IN.value}", email))

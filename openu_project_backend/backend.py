@@ -68,14 +68,34 @@ class Database:
         ''' create group in 'groups' table and return auth number '''
         group_auth = f"{uuid.uuid4()}".split('-')[0][0:5] #generate first 5 numbers for UUID
         
-        self.cur.execute(f"INSERT INTO groups (pk_id, group_name, auth) VALUES ({group_id}, {group_name}, {group_auth})")
+        self.cur.execute(f"INSERT INTO groups (pk_id, group_name, auth) VALUES ('{group_id}', '{group_name}', '{group_auth}')")
         self.conn.commit()
         
         return group_auth
     
+    def is_group_exists(self, group_id) -> None:
+        ''' Check if group exists, return True / False'''
+        #check if group_id exists
+        self.cur.execute(f"select * from groups where pk_id = {group_id}")
+        group = self.cur.fetchall() #return list of tuples
+        if group:
+            return True
+        else:
+            return False
+    
+    def get_auth(self, group_id) -> str:
+        ''' Get auth from group_id '''
+        #get auth following given group_id
+        self.cur.execute(f"select auth from groups where pk_id = {group_id}")
+        auth = self.cur.fetchall()[0][0] #return list of tuples thats why
+        if auth:
+            return auth
+        else:
+            return None
+    
     def create_user(self, user_id, user_name, email, is_admin) -> None:
         ''' create user in 'users' table '''
-        self.cur.execute(f"INSERT INTO users (pk_id, user_name, email, is_admin) VALUES ({user_id}, {user_name}, {email}, {is_admin})")
+        self.cur.execute(f"INSERT INTO users (pk_id, user_name, email, is_admin) VALUES ('{user_id}', '{user_name}', '{(email).lower()}', '{is_admin}')")
         self.conn.commit()
     
     def is_user_exists(self, user_id) -> tuple[bool, str]:
@@ -87,7 +107,7 @@ class Database:
         self.cur.execute(f"select * from users where pk_id = {user_id}")
         user = self.cur.fetchall() #return list of tuples
         if user:
-            return True, f""+user
+            return True, user
         else:
             return False, None
         
@@ -103,12 +123,12 @@ class Database:
         
     def create_usergroups(self, user_id, group_id, is_group_admin) -> None:
         ''' create connection (row) in 'usergroups' table '''
-        self.cur.execute(f"INSERT INTO usergroups (fk_user_id, fk_group_id, role) VALUES ({user_id}, {group_id}, {is_group_admin})")
+        self.cur.execute(f"INSERT INTO usergroups (fk_user_id, fk_group_id, role) VALUES ('{user_id}', '{group_id}', '{is_group_admin}')")
         self.conn.commit()
         
     def is_usergroups_row_exists(self, user_id, group_id) -> bool:
         ''' return True if user-group row is already exists '''
-        self.cur.execute(f"SELECT * FROM users WHERE user_id = {user_id} AND group_id = {group_id}")
+        self.cur.execute(f"SELECT * FROM usergroups WHERE fk_user_id = {user_id} AND fk_group_id = {group_id}")
         row = self.cur.fetchall() #return list of tuples
         if row:
             return True
