@@ -9,8 +9,12 @@ from config import categories_config
 class Database:
     def __init__(self):
         self.conn = psycopg2.connect(
-        '''...''')
-        
+            host="sanda-moneymate.postgres.database.azure.com",
+            database="postgres",
+            user="sadna_admin",
+            password="Password1",
+            port=5432)
+       
         self.cur = self.conn.cursor()
        
 
@@ -25,6 +29,7 @@ class Database:
         if user_role == 1:
             self.cur.execute(f"DELETE FROM userproducts WHERE fk_group_id = {group_id} and EXTRACT(MONTH FROM date_created) = EXTRACT(MONTH FROM CURRENT_DATE)")
             self.conn.commit()
+
         return user_role
 
     def toExcel(self, group_id):
@@ -115,6 +120,7 @@ class Database:
     def add_user(self,user_id,user_name, email):
         #check if user exists
 
+        email = email.lower()
         #check if email already in the db:
         self.cur.execute(f"select * from users where email = '{email}'")
         email_in_db = self.cur.fetchall()
@@ -131,9 +137,6 @@ class Database:
         #update 
         else:
             return "User already has email"
-
-        
-
 
 
     def breakeven(self, group_id):
@@ -158,12 +161,12 @@ class Database:
                 for b2 in balances:
                     if b2[1] < 0:
                         if b1[1] <= -b2[1]: # b1 pay all his debt to b2
-                            result += b1[0] + " give to " + b2[0] + " " + str(b1[1]) + " mesos"
+                            result += b1[0] + " owe " + b2[0] + " " + str(round(b1[1])) + " ₪\n"
                             b2[1] = b2[1] + b1[1]
                             b1[1] = 0
                             break
                         else: # b1 pay part of his debt to b2
-                            result += b1[0] + " give to " + b2[0] + " " + str(-b2[1]) + " mesos"
+                            result += b1[0] + " owe " + b2[0] + " " + str(round(-b2[1])) + " ₪\n"
                             b1[1] = b1[1] + b2[1]
                             b2[1] = 0
         return result
@@ -228,9 +231,15 @@ def write_category(group_id, new_category):
 
 
 def get_categories(group_id):
+    
     if not open("categories.json").read(1):
-        # file is empty
+        # file not exists
+        data = {}
+        json_string = json.dumps(data)
+        with open("categories.json", "w") as f:
+            f.write(json_string)
         return []
+
     else:
         # file is not empty, read JSON file into a dictionary
         with open("categories.json", "r") as f:
@@ -265,13 +274,3 @@ def remove_category(group_id, category):
     else:
         return "category not exist"
 
-
-
-#print(add_category("1","foodd"))
-#db = Database()
-#print(db.split(-895523590))
-#db.barchart(-895523590, "")
-#db.barchart(-749348626, "")
-#print(db.total_expenses(-749348626))
-#db.toExcel(-749348626)
-#db.piechart(-749348626)
