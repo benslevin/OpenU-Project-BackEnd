@@ -1,5 +1,5 @@
-from Responses import responses, get_price, get_category, valid_email
-from config import TOKEN, Button, Command, categories_config
+from Responses import responses, get_price, get_category, valid_email, start_response,  help_response
+from config import TOKEN, Button, Command, categories_config, categories_config_dict 
 
 from backend import Database, get_categories, write_category, remove_category
 
@@ -25,8 +25,6 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(f'This bot avaible only for groups!')
         return
 
-    
-
     user_name = update.message.from_user.first_name
     group_name = update.message.chat.title
     user_id = update.message.from_user.id
@@ -43,7 +41,7 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if response: 
         await update.message.reply_text(response) #user doesn't exists
         return
-
+    
     all_categories = categories_config + get_categories(str(group_id))
     reply = responses(update.message.text)
     
@@ -53,7 +51,10 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if i % 3 == 0 and i != 0:
             keyboard.append([])
             j += 1
-        keyboard[j].append(InlineKeyboardButton(item, callback_data=item))
+        if item in categories_config:
+            keyboard[j].append(InlineKeyboardButton(categories_config_dict[item], callback_data=item))
+        else:
+            keyboard[j].append(InlineKeyboardButton(item, callback_data=item))
         
     if update.message.text.isnumeric():  # user report only number -> bot will suggests categories
         if int(update.message.text) < 0:
@@ -117,13 +118,10 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ---------------------- Commands ----------------------- #
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Inform user about what this bot can do"""
-    # admins = update.get_bot().get_chat_administrators(update.message.chat.id)
-    await update.message.reply_text("hi!")
+    await update.message.reply_text(start_response)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Displays info on how to use the bot."""
-    await update.message.reply_text("Use /start to test this bot.")
+    await update.message.reply_text(help_response)
 
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
