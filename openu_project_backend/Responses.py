@@ -1,8 +1,5 @@
-
 #examples:
 import re
-groups = ['123','1234']
-users = ['12', '124']
 
 def responses(input_text):
     user_message = str(input_text).lower()
@@ -22,17 +19,12 @@ def get_category(input_text):
         if not s.isnumeric():
             return s
 
-def add_row_private(user_id):
-    # private user
-    if user_id in users:
-        pass
-    # create new user table
-    else:
-        pass
-
-
 def valid_email(email):
     if len(email) > 7:
         if re.match("^.+@(\[?)[a-zA-Z0-9-.]+.([a-zA-Z]{2,3}|[0-9]{1,3})(]?)$", email) != None:
             return True
-    return False
+        
+
+start_response = "Welcome to MoneyMate bot!\nThis bot helps you manage and track your expenses in groups.\nFor more information, type /help"
+
+help_response = "Initial setup\nAdd the bot to a group. Then, every user need to write their email.For example, type moshe@gmail.com\n\nAfter that, you can start managing your expenses.\nFor example, type 50 to add an expense and then selecet category.\nfor more commands, type / and you will see all the commands\n"
