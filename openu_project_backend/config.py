@@ -72,4 +72,5 @@ class Category(Enum):
     OTHER = "other"
     # TODO: verify categories
 
-categories_config = ["food", "gas", "groceries", "shopping", "clothes", "entertaiment", "other"]
+categories_config = ["food", "gas", "groceries", "shopping", "clothes", "pleasure", "other"]
+categories_config_dict = {"food": "Food 🍔", "gas": "Gas ⛽", "groceries": "Groceries🍎", "shopping": "Shopping🛒", "clothes": "Clothes👕", "pleasure": "Pleasure🎦", "other": "Other"}
