@@ -16,8 +16,6 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 
-#globals:
-db = Database()
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
@@ -87,9 +85,6 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #---------------------- Commands ----------------------- #
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Inform user about what this bot can do and create group for them in DB"""
-    
-    global db #declare global
-    
     #TODO: XXX: !NICE TO HAVE! - FIRST MESSAGE - check if new group or load existing group
     
     #create new row in 'groups' table
@@ -131,8 +126,6 @@ async def total_expenses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """ '/email ...' sign-in the user email with the group uuid into DB (for permissions to UI) """
     
-    global db #declare global
-    
     #get parameters of sender for new row in 'users' table
     sender_user_id = update.message.from_user.id
     sender_user_name = update.message.from_user.name
@@ -173,6 +166,7 @@ async def email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # Run the program
 if __name__ == '__main__':
+    db = Database()
     app = Application.builder().token(TOKEN).build()
 
     # Commands
