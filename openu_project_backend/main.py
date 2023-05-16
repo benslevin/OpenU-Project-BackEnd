@@ -164,7 +164,7 @@ async def email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     is_user_exists, user_info = db.is_user_exists(user_id=sender_user_id)
     if is_user_exists: #if already exists
         signed_email = user_info[0][2]
-        if signed_email == sender_email: #and if he sent different email -> ask for changes
+        if signed_email != sender_email: #and if he sent different email -> ask for changes
             await update.message.reply_text(f'hey {update.message.from_user.first_name}, your user is already exists in our datebase with the email:\n{signed_email}')
             #TODO: !NICE TO HAVE! would you like to change the email? (button of (Accept / Decline))
             #TODO: !NICE TO HAVE! NOAM - how to add button to accept changes

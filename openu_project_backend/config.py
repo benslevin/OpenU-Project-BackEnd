@@ -1,19 +1,20 @@
 import os
 from sys import exit
 from enum import Enum
-#from dotenv import load_dotenv
+from dotenv import load_dotenv
 from typing import \
     Final  # A special typing construct to indicate to type checkers that a name cannot be re-assigned or overridden in a subclass
 
 # load .env file
-#load_dotenv()
+load_dotenv()
 
 # BOT Token
-# TOKEN: Final = '5673704938:AAH7bcLtTitCVkmYyoDNSnMTRyvUaI5VsKk' -Money_Friendly_Bot
+# TOKEN: Final = '5673704938:AAH7bcLtTitCVkmYyoDNSnMTRyvUaI5VsKk' #-Money_Friendly_Bot
+#TOKEN: Final = '6235208308:AAEpoDVVKMXFvsrOiG2_CZibVkEuc5Xx6Xg' #-MoneyMateIL_bot
 TOKEN: Final = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A'
 
 # BOT name ro identify in group chats
-BOT_USERNAME: Final = '@MoneyMateIL_bot'
+BOT_USERNAME: Final = '@sadna1_bot'
 
 #DB info
 DB_HOST = os.environ.get("DB_HOST", "localhost")
