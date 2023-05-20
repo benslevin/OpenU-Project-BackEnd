@@ -42,21 +42,10 @@ class Command(Enum):
     ADDCATEGORY = "add_category"
     DELETECATEGORY = "delete_category"
     DASHBOARD = "dashboard"
-    AUTH = "auth" # send the auth key to the group chat
+    GET_PASSOWRD = "getPassword" # send the user his password in private chat
+    NEW_PASSWORD = "newPassword" # give the user the option to change his password
     SIGN_IN = "email" # create user in 'users' table
-'''
-start -  start conversation
-help - get information to how to use the bot
-stats - show stats of the group
-delete - delete expenses from the last month
-list - get a list of all your expenses in a specific month
-export - export the expenses of a given month as excel file
-dashboard - show the dashboard of the group
-breakeven - show the breakeven of the group
-add_category - add a new category
-delete_cateogry - delete a category
-auth - send the authentication number of the group
-'''
+
 
 # buttons:
 class Button(Enum):

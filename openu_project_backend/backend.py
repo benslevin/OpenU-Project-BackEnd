@@ -180,14 +180,10 @@ class Database:
         row = self.cur.fetchone()[0]
         return row
     
-    def create_group(self, group_id, group_name) -> int:
-        ''' create group in 'groups' table and return auth number '''
-        group_auth = f"{uuid.uuid4()}".split('-')[0][0:5] #generate first 5 numbers for UUID
-        
-        self.cur.execute(f"INSERT INTO groups (pk_id, group_name, auth) VALUES ('{group_id}', '{group_name}', '{group_auth}')")
+    def create_group(self, group_id, group_name) -> None:
+        ''' create group in 'groups' table '''
+        self.cur.execute(f"INSERT INTO groups (pk_id, group_name) VALUES ('{group_id}', '{group_name}')")
         self.conn.commit()
-        
-        return group_auth
     
     def is_group_exists(self, group_id) -> None:
         ''' Check if group exists, return True / False'''
@@ -199,20 +195,37 @@ class Database:
         else:
             return False
     
-    def get_auth(self, group_id) -> str:
-        ''' Get auth from group_id '''
-        #get auth following given group_id
-        self.cur.execute(f"select auth from groups where pk_id = {group_id}")
-        auth = self.cur.fetchall()[0][0] #return list of tuples thats why
-        if auth:
-            return auth
+    def get_password(self, user_id) -> str:
+        ''' Get password from user_id '''
+        #get password following given user_id
+        self.cur.execute(f"select password from users where pk_id = {user_id}")
+        password = self.cur.fetchall()[0][0] #return list of tuples thats why
+        if password:
+            return password
         else:
             return None
-    
-    def create_user(self, user_id, user_name, email, is_admin) -> None:
-        ''' create user in 'users' table '''
-        self.cur.execute(f"INSERT INTO users (pk_id, user_name, email, is_admin) VALUES ('{user_id}', '{user_name}', '{(email).lower()}', '{is_admin}')")
+        
+    def new_password(self, user_id, password) -> str:
+        ''' set new password for user_id, return None if failed, return password if valid '''
+        #validate password #NOTE: XXX: !NICE TO HAVE! more validation cases
+        if len(password) < 6: return None
+        if len(password) > 40: return None
+        
+        #set new password in db
+        self.cur.execute(f"UPDATE users SET password = '{password}' WHERE pk_id = {user_id}")
         self.conn.commit()
+        
+        return password
+    
+    
+    def create_user(self, user_id, user_name, email, is_admin) -> str:
+        ''' create user in 'users' table '''
+        random_password = f"{uuid.uuid4()}" #generate new password
+        
+        self.cur.execute(f"INSERT INTO users (pk_id, user_name, email, is_admin, password) VALUES ('{user_id}', '{user_name}', '{(email).lower()}', '{is_admin}', '{random_password}')")
+        self.conn.commit()
+        
+        return random_password
     
     def is_user_exists(self, user_id) -> tuple[bool, str]:
         ''' Check if user exists.\n
