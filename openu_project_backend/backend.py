@@ -1,27 +1,36 @@
-import psycopg2
+import uuid
 import pandas as pd
+import psycopg2
 import matplotlib.pyplot as plt
 import random
-from collections import defaultdict
 import json
+from collections import defaultdict
+#from openu_project_backend import config
+import config
+#from openu_project_backend.config import categories_config
 from config import categories_config
+import string
 
 class Database:
     def __init__(self):
         self.conn = psycopg2.connect(
-            host="sanda-moneymate.postgres.database.azure.com",
-            database="postgres",
-            user="sadna_admin",
-            password="Password1",
-            port=5432)
-       
+            host =      config.DB_HOST,
+            database =  config.DB_DATABASE_NAME,
+            user =      config.DB_USER,
+            password =  config.DB_PASSWORD,
+            port =  int(config.DB_PORT))
+        
         self.cur = self.conn.cursor()
-       
+        
 
     def new_expense(self, user_id,group_id, category, price):
         self.cur.execute("INSERT INTO userproducts (fk_user_id,fk_group_id,category_name,amount) VALUES (%s, %s, %s ,%s)",(user_id, group_id,category, price))
         self.conn.commit()
-    
+
+
+    def insert(self, message_id, group_id, group_name, user_id, user_name, category, price):
+        self.cur.execute("INSERT INTO db VALUES (?,?,?,?,?,?,?)",(message_id, group_id, group_name, user_id, user_name, category, price))
+        self.conn.commit()
 
     def delete(self,group_id, user_id):
         self.cur.execute(f"select role from usergroups where fk_group_id = {group_id} and fk_user_id = {user_id} ")
@@ -31,6 +40,156 @@ class Database:
             self.conn.commit()
 
         return user_role
+
+
+    def exists(self,user_id, user_name, group_id, group_name):
+        #check if user exists
+        self.cur.execute(f"select * from users where pk_id = {user_id}")
+        user = self.cur.fetchall()
+        if not user:
+            #add new user:
+            while True:
+                login = generate_random_username().lower()
+                self.cur.execute(f"select * from users where login_name = '{login}'")
+                user = self.cur.fetchall()
+                if not user:
+                    break
+            self.add_user(user_id,user_name, login)
+
+        
+        # check if group exists
+        self.cur.execute(f"select * from groups where pk_id = {group_id}")
+        group= self.cur.fetchall()
+        if not group:
+            auth = random.randint(10000,99999)
+            self.cur.execute("INSERT INTO groups (pk_id,group_name) VALUES (%s,%s)",(group_id,group_name))
+            self.conn.commit()
+
+        # check if user is in group:
+        self.cur.execute(f"select * from usergroups where fk_user_id = {user_id} and fk_group_id = {group_id}")
+        usergroups= self.cur.fetchall()
+        if not usergroups:
+            if group:
+                role = 0
+            else:
+                role = 1
+            self.cur.execute("INSERT INTO usergroups (fk_user_id,fk_group_id, role) VALUES (%s, %s, %s)",(user_id, group_id, role))
+            self.conn.commit()
+
+    def add_user(self,user_id,user_name,login_name):
+        password = str(random.randint(1000,10000))
+        self.cur.execute("INSERT INTO users (pk_id,user_name,login_name,password, is_admin) VALUES (%s, %s, %s, %s, %s)",(user_id, user_name, login_name, password, 0))
+        self.conn.commit()
+
+    
+    def create_group(self, group_id, group_name):
+        ''' create group in 'groups' table '''
+        self.cur.execute(f"INSERT INTO groups (pk_id, group_name) VALUES ('{group_id}', '{group_name}')")
+        self.conn.commit()
+    
+    def is_group_exists(self, group_id):
+        ''' Check if group exists, return True / False'''
+        #check if group_id exists
+        self.cur.execute(f"select * from groups where pk_id = {group_id}")
+        group = self.cur.fetchall() #return list of tuples
+        if group:
+            return True
+        else:
+            return False
+    
+    def get_password(self, user_id) -> str:
+        ''' Get password from user_id '''
+        #get password following given user_id
+        self.cur.execute(f"select password from users where pk_id = {user_id}")
+        password = self.cur.fetchall()[0][0] #return list of tuples thats why
+        if password:
+            return password
+        else:
+            return None
+        
+    def new_password(self, user_id, password) -> str:
+        ''' set new password for user_id, return None if failed, return password if valid '''
+        #validate password #NOTE: XXX: !NICE TO HAVE! more validation cases
+        if len(password) < 6: return None
+        if len(password) > 10: return None
+        #set new password in db
+        self.cur.execute(f"UPDATE users SET password = '{password}' WHERE pk_id = {user_id}")
+        self.conn.commit()
+        
+        return password
+    
+    def get_login(self, user_id) -> str:
+        ''' Get login name from user_id '''
+        #get password following given user_id
+        self.cur.execute(f"select login_name from users where pk_id = {user_id}")
+        login_name = self.cur.fetchall()[0][0] #return list of tuples thats why
+        if login_name:
+            return login_name
+        else:
+            return None
+        
+    def new_login(self, user_id, login) -> str:
+        ''' set new password for user_id, return None if failed, return password if valid '''
+        #validate password #NOTE: XXX: !NICE TO HAVE! more validation cases
+        if len(login) < 4: return None
+        if len(login) > 10: return None
+        #set new password in db
+        self.cur.execute(f"UPDATE users SET login = '{login}' WHERE pk_id = {user_id}")
+        self.conn.commit()
+        return login
+
+    
+    def create_user(self, user_id, user_name, email, is_admin) -> str:
+        ''' create user in 'users' table '''
+        random_password = f"{uuid.uuid4()}" #generate new password
+        
+        self.cur.execute(f"INSERT INTO users (pk_id, user_name, email, is_admin, password) VALUES ('{user_id}', '{user_name}', '{(email).lower()}', '{is_admin}', '{random_password}')")
+        self.conn.commit()
+        
+        return random_password
+    
+    def is_user_exists(self, user_id):
+        ''' Check if user exists.\n
+            Return (True, string of the details about the user) if exists,\n
+            Return (False, None) if not exists'''
+            
+        #check if user_id exists
+        self.cur.execute(f"select * from users where pk_id = {user_id}")
+        user = self.cur.fetchall() #return list of tuples
+        if user:
+            return True, user
+        else:
+            #create random username
+            #new_user_name = generate_random_username()
+            #self.add_user(user_id,user_name, new_user_name)
+            return False, None
+        
+
+        
+    def is_email_exists(self, email) -> bool:
+        ''' Check if email exists '''
+        #check if email exists #NOTE: stupid verification instead of googleAPI to prevent from UI to collapse because of 2 rows with identifiy emails
+        self.cur.execute(f"select * from users where email = {email}")
+        email = self.cur.fetchall() #return list of tuples
+        if email:
+            return True
+        else:
+            return False
+        
+    def create_usergroups(self, user_id, group_id, is_group_admin) -> None:
+        ''' create connection (row) in 'usergroups' table '''
+        self.cur.execute(f"INSERT INTO usergroups (fk_user_id, fk_group_id, role) VALUES ('{user_id}', '{group_id}', '{is_group_admin}')")
+        self.conn.commit()
+        
+    def is_usergroups_row_exists(self, user_id, group_id) -> bool:
+        ''' return True if user-group row is already exists '''
+        self.cur.execute(f"SELECT * FROM usergroups WHERE fk_user_id = {user_id} AND fk_group_id = {group_id}")
+        row = self.cur.fetchall() #return list of tuples
+        if row:
+            return True
+        else:
+            return False
+        
 
     def toExcel(self, group_id):
         query = f"select u.user_name as user, category_name as category, amount as price from userproducts up join users u on up.fk_user_id = u.pk_id where fk_group_id = {group_id}"
@@ -88,57 +247,6 @@ class Database:
            self.cur.execute(f'SELECT SUM(amount) FROM userproducts where fk_group_id = {group_id}') 
         return self.cur.fetchone()[0]
 
-    def exists(self,user_id, group_id, group_name):
-
-        #check if user exists
-        self.cur.execute(f"select * from users where pk_id = {user_id}")
-        user = self.cur.fetchall()
-        if not user:
-            return "Please enter Email first!"
-            #self.cur.execute("INSERT INTO users (pk_id,user_name,email,is_admin) VALUES (%s, %s, %s, %s)",(user_id, user_name, email, 0))
-            #self.conn.commit()
-        
-        # check if group exists
-        self.cur.execute(f"select * from groups where pk_id = {group_id}")
-        group= self.cur.fetchall()
-        if not group:
-            auth = random.randint(10000,99999)
-            self.cur.execute("INSERT INTO groups (pk_id,group_name,auth) VALUES (%s,%s,%s)",(group_id,group_name,auth))
-            self.conn.commit()
-
-        # check if user is in group:
-        self.cur.execute(f"select * from usergroups where fk_user_id = {user_id} and fk_group_id = {group_id}")
-        usergroups= self.cur.fetchall()
-        if not usergroups:
-            if group:
-                role = 0
-            else:
-                role = 1
-            self.cur.execute("INSERT INTO usergroups (fk_user_id,fk_group_id, role) VALUES (%s, %s, %s)",(user_id, group_id, role))
-            self.conn.commit()
-
-    def add_user(self,user_id,user_name, email):
-        #check if user exists
-
-        email = email.lower()
-        #check if email already in the db:
-        self.cur.execute(f"select * from users where email = '{email}'")
-        email_in_db = self.cur.fetchall()
-        if email_in_db:
-            return "Email already in the db"
-        
-
-        self.cur.execute(f"select * from users where pk_id = {user_id}")
-        user = self.cur.fetchall()
-        if not user:
-            self.cur.execute("INSERT INTO users (pk_id,user_name,email,is_admin) VALUES (%s, %s, %s, %s)",(user_id, user_name, email, 0))
-            self.conn.commit()
-            return "User added"
-        #update 
-        else:
-            return "User already has email"
-
-
     def breakeven(self, group_id):
         
         self.cur.execute(f"select u.user_name, sum(amount)from userproducts up join users u on up.fk_user_id = u.pk_id where fk_group_id = {group_id} group by u.user_name")
@@ -172,33 +280,12 @@ class Database:
         return result
 
 
-
-    def get_auth(self, group_id):
-        self.cur.execute(f"select auth from groups where pk_id = {group_id}")
-        row = self.cur.fetchone()[0]
-        return row
-    
-
     # end of class
 
-    '''
-    def get_users(self):
-        self.cur.execute("select * from users")
-        rows = self.cur.fetchall()
-        print(rows)
 
 
-    def get_user_products(self):
-        self.cur.execute("select * from userproducts")
-        rows = self.cur.fetchall()
-        print(rows)
 
-    def get_productcategories(self):
-        self.cur.execute("select * from productcategories")
-        rows = self.cur.fetchall()
-        print(rows)
-    '''
-    
+
 #other functions:
 
 def write_category(group_id, new_category):
@@ -274,3 +361,20 @@ def remove_category(group_id, category):
     else:
         return "category not exist"
 
+
+def generate_random_username(length=6):
+    characters = string.ascii_letters + string.digits  # Letters + Digits
+    username = ''.join(random.choice(characters) for _ in range(length))
+    return username
+
+
+def valid_input(input):
+
+    if not input.isnumeric():
+        return "You must enter a number"
+
+    if int(input) < 0:
+        return "Expense must be greater than 0"
+    
+    if int(input) > 10000000:
+        return "Expense must be less than 10,000,000"
