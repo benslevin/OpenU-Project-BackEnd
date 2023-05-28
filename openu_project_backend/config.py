@@ -1,20 +1,28 @@
 import os
 from sys import exit
 from enum import Enum
-#from dotenv import load_dotenv
-from typing import \
-    Final  # A special typing construct to indicate to type checkers that a name cannot be re-assigned or overridden in a subclass
+from dotenv import load_dotenv
+#from typing import \
+#Final  # A special typing construct to indicate to type checkers that a name cannot be re-assigned or overridden in a subclass
 
 # load .env file
-#load_dotenv()
+load_dotenv()
 
 # BOT Token
-# TOKEN: Final = '5673704938:AAH7bcLtTitCVkmYyoDNSnMTRyvUaI5VsKk' -Money_Friendly_Bot
-TOKEN: Final = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A'
+# TOKEN: Final = '5673704938:AAH7bcLtTitCVkmYyoDNSnMTRyvUaI5VsKk' #-Money_Friendly_Bot
+#TOKEN: Final = '6235208308:AAEpoDVVKMXFvsrOiG2_CZibVkEuc5Xx6Xg' #-MoneyMateIL_bot
+#TOKEN: Final = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A'
+TOKEN = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A'
 
 # BOT name ro identify in group chats
-BOT_USERNAME: Final = '@MoneyMateIL_bot'
+BOT_USERNAME = '@sadna1_bot'
 
+#DB info
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_DATABASE_NAME = os.environ.get("DB_DATABASE_NAME", "postgres")
+DB_USER = os.environ.get("DB_USER", "sadna_admin")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "Password1")
+DB_PORT = os.environ.get("DB_PORT", "5432")
 
 # telegram info
 # TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
@@ -32,23 +40,15 @@ class Command(Enum):
     STOP = "stop"  # stops a recurring expense
     LINK = "link"  # send fast UI link (NICE TO HAVE)
     BREAKEVEN = "breakeven"
-    ADDCATEGORY = "add_category"
-    DELETECATEGORY = "delete_category"
+    ADDCATEGORY = "addCategory"
+    DELETECATEGORY = "deleteCategory"
     DASHBOARD = "dashboard"
-    AUTH = "auth"
-'''
-start -  start conversation
-help - get information to how to use the bot
-stats - show stats of the group
-delete - delete expenses from the last month
-list - get a list of all your expenses in a specific month
-export - export the expenses of a given month as excel file
-dashboard - show the dashboard of the group
-breakeven - show the breakeven of the group
-add_category - add a new category
-delete_cateogry - delete a category
-auth - send the authentication number of the group
-'''
+    GET_PASSOWRD = "getPassword" # send the user his password in private chat
+    SET_PASSWORD = "newPassword" # give the user the option to change his password
+    GET_LOGIN = "getLogin"
+    SET_LOGIN = "setLogin"
+    SIGN_IN = "email" # create user in 'users' table
+
 
 # buttons:
 class Button(Enum):
