@@ -44,7 +44,7 @@ class Command(Enum):
     DASHBOARD = "dashboard"
     GET_PASSOWRD = "getPassword" # send the user his password in private chat
     NEW_PASSWORD = "newPassword" # give the user the option to change his password
-    SIGN_IN = "email" # create user in 'users' table
+    SIGN_IN = "signin" # create user in 'users' table
 
 
 # buttons:

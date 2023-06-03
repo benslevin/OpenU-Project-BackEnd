@@ -134,14 +134,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         db.create_group(group_id=group_id, group_name=group_name)
     
     # ~~ FIRST MESSAGE ~~ (welcome)
-    await update.message.reply_text("Hey there!, \nThank you for added me, I will help you to track your expenses.")
+    await update.message.reply_text("Thank you for adding me, I will help you track your expenses.")
     
     # ~~ SECOND MESSAGE ~~ (instruct to use '/email' command)
     #if it is a group
     if group_type == 'group': 
-        await update.message.reply_text(f"Please each of you provide me your emails for login premissions to our UI, e.g:\n'/{Command.SIGN_IN.value} sagivabu@gmail.com'")
+        await update.message.reply_text(f"Please each of you provide me your username for login permissions to our website, e.g:\n'/{Command.SIGN_IN.value} sagivabu'")
     else: 
-        await update.message.reply_text(f"Please provide me your email for login premissions to our UI, e.g:\n'/{Command.SIGN_IN.value} sagivabu@gmail.com'")
+        await update.message.reply_text(f"Please provide me your username for login permissions to our website, e.g:\n'/{Command.SIGN_IN.value} sagivabu'")
     
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(help_response)
@@ -152,7 +152,7 @@ async def getPassword(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     #verify it is private chat
     group_type = update.message.chat.type
     if group_type == 'group':  #get group_name = chat_name / user name (in private chat)
-        await update.message.reply_text(f'hey {update.message.from_user.first_name}, this command can only be used in private chat with me!')
+        await update.message.reply_text(f'hey {update.message.from_user.first_name}, this command can only be used in a private chat with me')
         return
         
     #get the password from db
@@ -160,7 +160,7 @@ async def getPassword(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     password = db.get_password(sender_user_id)
     
     #send password in private chat
-    await update.message.reply_text(f"Hello, your password for the UI is: {password}")
+    await update.message.reply_text(f"Hello, your password for our website is: {password}")
 
 async def newPassword(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """ '/newPassword ....' - change the passowrd of the user """
@@ -168,7 +168,7 @@ async def newPassword(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     #verify it is private chat
     group_type = update.message.chat.type
     if group_type == 'group':  #get group_name = chat_name / user name (in private chat)
-        await update.message.reply_text(f'hey {update.message.from_user.first_name}, this command can only be used in private chat with me!')
+        await update.message.reply_text(f'hey {update.message.from_user.first_name}, this command can only be used in a private chat with me')
         return
         
     #set the new password for this user
@@ -193,20 +193,20 @@ async def email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #verify user does not exists
     is_user_exists, user_info = db.is_user_exists(user_id=sender_user_id)
     if is_user_exists: #if already exists
-        signed_email = user_info[0][2] #get email from user_info
-        if signed_email != sender_email: #and if he sent different email -> ask for changes
-            await update.message.reply_text(f'hey {update.message.from_user.first_name}, your user is already signed-in with the email:\n{signed_email}')
+        signed_username = user_info[0][2] #get email from user_info
+        if signed_username != sender_email: #and if he sent different email -> ask for changes
+            await update.message.reply_text(f'hey {update.message.from_user.first_name}, your user is already signed-in with the username:\n{signed_username}')
             #TODO: !NICE TO HAVE! would you like to change the email? (button of (Accept / Decline))
             #TODO: !NICE TO HAVE! NOAM - how to add button to accept changes
         if db.get_password(sender_user_id) == None: #if password not exists
             db.new_password(user_id=sender_user_id, password=f"{uuid.uuid4()}")
-            await update.message.reply_text(f"hey {update.message.from_user.first_name}, I generated you a new password.\nPlease use '/{Command.GET_PASSOWRD.value}' command in private chat with me.")
+            await update.message.reply_text(f"hey {update.message.from_user.first_name}, I have generated you a new password.\nPlease use '/{Command.GET_PASSOWRD.value}' command in a private chat with me.")
             
     #create new user in DB, generate him new password
     else: #if user does not exists in 'users' table  
         db.create_user(user_id=sender_user_id, user_name=sender_user_name, email=sender_email, is_admin=0)
-        await update.message.reply_text(f"hey {update.message.from_user.first_name}, I generated you a new password for our UI.\nPlease use '/{Command.GET_PASSOWRD.value}' command in private chat with me.")
-        await update.message.reply_text(f"To change the password please use the next command in private chat with me: '/{Command.NEW_PASSWORD.value} YOUR_NEW_PASSWORD'")
+        await update.message.reply_text(f"hey {update.message.from_user.first_name}, I have generated you a new password for our website.\nPlease use '/{Command.GET_PASSOWRD.value}' command in a private chat with me.")
+        await update.message.reply_text(f"To change the password please use the next command in a private chat with me: '/{Command.NEW_PASSWORD.value} YOUR_NEW_PASSWORD'")
 
     #CREATE connection between user and group in 'usergroups' table
     connection = db.is_usergroups_row_exists(user_id=sender_user_id, group_id=group_id) #check if connection already exists
@@ -231,7 +231,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return    
 
     keyboard = [
@@ -248,7 +248,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return
 
     user_id = update.message.from_user.id
@@ -262,7 +262,7 @@ async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return
 
     db.toExcel(update.message.chat.id)
@@ -271,7 +271,7 @@ async def export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def breakeven(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return
 
     response = db.breakeven(update.message.chat.id)
@@ -282,7 +282,7 @@ async def breakeven(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def add_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return
 
     try:
@@ -296,7 +296,7 @@ async def add_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def delete_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return
 
     try:
@@ -310,7 +310,7 @@ async def delete_category(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return
 
     group_id = str(update.message.chat.id)
@@ -320,7 +320,7 @@ async def dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if update.message.chat.type == 'private':
-        await update.message.reply_text(f'This bot avaible only for groups!')
+        await update.message.reply_text(f'This bot is available only for groups')
         return
 
     group_id = str(update.message.chat.id)
