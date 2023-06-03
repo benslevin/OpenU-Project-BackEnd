@@ -1,4 +1,3 @@
-#examples:
 import re
 
 def responses(input_text):
@@ -25,6 +24,4 @@ def valid_email(email):
             return True
         
 
-start_response = "Welcome to MoneyMate bot!\nThis bot helps you manage and track your expenses in groups.\nFor more information, type /help"
-
-help_response = "Initial setup\nAdd the bot to a group. Then, every user need to write their email.For example, type moshe@gmail.com\n\nAfter that, you can start managing your expenses.\nFor example, type 50 to add an expense and then selecet category.\nfor more commands, type / and you will see all the commands\n"
+help_response = "Initial setup\nAdd the bot to a group and than you cant start writing expenses.\nFor example, type 50 to add an expense and then select category.\nfor more commands, type / and you will see all the commands\n"

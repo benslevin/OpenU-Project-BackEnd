@@ -1,10 +1,12 @@
 import uuid
-import pandas as pd
-import psycopg2
-import matplotlib.pyplot as plt
 import random
 import json
+import string
+import psycopg2
+import pandas as pd
+import matplotlib.pyplot as plt
 from collections import defaultdict
+
 from openu_project_backend import config
 from openu_project_backend.config import categories_config
 
@@ -18,24 +20,170 @@ class Database:
             port =  int(config.DB_PORT))
         
         self.cur = self.conn.cursor()
+    
+    # -------------------- SETs / CREATEs ------------------   
+    def create_user(self, user_id, user_name, login_name, password, is_admin) -> str:
+        ''' create user in 'users' table '''
+        #validate login_name #NOTE: XXX: !NICE TO HAVE! more validation cases
+        if len(login_name) < config.LOGIN_NAME_MIN_LENGTH: return None
+        if len(login_name) > config.LOGIN_NAME_MAX_LENGTH: return None
         
+        #set new login_name in db
+        self.cur.execute(f"INSERT INTO users (pk_id, user_name, login_name, password, is_admin) VALUES ('{user_id}', '{user_name}', '{(login_name).lower()}', '{password}', '{is_admin}')")
+        self.conn.commit()
+        
+        return login_name
+
+    def create_group(self, group_id, group_name):
+        ''' create group in 'groups' table '''
+        self.cur.execute(f"INSERT INTO groups (pk_id, group_name) VALUES ('{group_id}', '{group_name}')")
+        self.conn.commit()
+    
+    def set_login_name(self, user_id, login_name) -> str:
+        ''' set new login_name for user_id, return None if failed, return login_name if valid '''
+        #validate login_Name #NOTE: XXX: !NICE TO HAVE! more validation cases
+        if len(login_name) < config.LOGIN_NAME_MIN_LENGTH: return None
+        if len(login_name) > config.LOGIN_NAME_MAX_LENGTH: return None
+        
+        #set new login_Name in db
+        self.cur.execute(f"UPDATE users SET login_name = '{login_name}' WHERE pk_id = {user_id}")
+        self.conn.commit()
+        
+        return login_name
+    
+    def set_password(self, user_id, password) -> str:
+        ''' set new password for user_id, return None if failed, return password if valid '''
+        #validate password #NOTE: XXX: !NICE TO HAVE! more validation cases
+        if len(password) < config.PASSWORD_MIN_LENGTH: return None
+        if len(password) > config.PASSWORD_MAX_LENGTH: return None
+        
+        #set new password in db
+        self.cur.execute(f"UPDATE users SET password = '{password}' WHERE pk_id = {user_id}")
+        self.conn.commit()
+        
+        return password
+       
+    def create_usergroups(self, user_id, group_id, is_group_admin) -> None:
+        ''' create connection (row) in 'usergroups' table '''
+        self.cur.execute(f"INSERT INTO usergroups (fk_user_id, fk_group_id, role) VALUES ('{user_id}', '{group_id}', '{is_group_admin}')")
+        self.conn.commit()
+    
     def new_expense(self, user_id,group_id, category, price):
         self.cur.execute("INSERT INTO userproducts (fk_user_id,fk_group_id,category_name,amount) VALUES (%s, %s, %s ,%s)",(user_id, group_id,category, price))
         self.conn.commit()
 
+    # -------------------- GETs ------------------
+    def get_password(self, user_id) -> str:
+        ''' Get password from 'users' table following given user_id '''
+        #get password following given user_id
+        self.cur.execute(f"select password from users where pk_id = {user_id}")
+        password = self.cur.fetchall()[0][0] #return list of tuples thats why
+        if password:
+            return password
+        else:
+            return None
+        
+    def get_login(self, user_id) -> str:
+        ''' Get login_name from 'users' table following given user_id '''
+        #get login_name following given user_id
+        self.cur.execute(f"select login_name from users where pk_id = {user_id}")
+        login_name = self.cur.fetchall()[0][0] #return list of tuples thats why
+        if login_name:
+            return login_name
+        else:
+            return None
+        
+    # -------------------- IS_EXISTS ------------------
+    def is_user_exists(self, user_id):
+        ''' Check if user exists.\n
+            Return (True, string of the details about the user) if exists,\n
+            Return (False, None) if not exists'''
+            
+        #check if user_id exists
+        self.cur.execute(f"select * from users where pk_id = {user_id}")
+        user = self.cur.fetchall() #return list of tuples
+        if user:
+            return True, user
+        else:
+            #create random username
+            #new_user_name = generate_random_username()
+            #self.add_user(user_id,user_name, new_user_name)
+            return False, None
+    
+    def is_usergroups_row_exists(self, user_id, group_id) -> bool:
+        ''' return True if user-group row is already exists '''
+        self.cur.execute(f"SELECT * FROM usergroups WHERE fk_user_id = {user_id} AND fk_group_id = {group_id}")
+        row = self.cur.fetchall() #return list of tuples
+        if row:
+            return True
+        else:
+            return False
+    
+    def is_group_exists(self, group_id):
+        ''' Check if group exists, return True / False'''
+        #check if group_id exists
+        self.cur.execute(f"select * from groups where pk_id = {group_id}")
+        group = self.cur.fetchall() #return list of tuples
+        if group:
+            return True
+        else:
+            return False
+   
+    def exists(self,user_id, user_name, group_id, group_name, group_admin_flag: bool= False, update=None):
+        """ activate on report. check if user, group and usergroups exists - else create them for tracking the report """
+        
+        #check if user exists
+        if not self.is_user_exists(user_id):
+            #if not create random user
+            while True:
+                login_name = generate_random_username().lower()
+                self.cur.execute(f"select * from users where login_name = '{login_name}'") #make sure login_name not exists
+                user = self.cur.fetchall()
+                if not user:
+                    break
+            temp_password = f"{uuid.uuid4()}" #generate new password
+            self.create_user(user_id, user_name, login_name, temp_password, is_admin=0)
+  
+        # check if group exists
+        if not self.is_group_exists(group_id):
+            self.create_group(group_id=group_id, group_name=group_name)
 
+        # check if user-group connection exists:
+        if not self.is_usergroups_row_exists(user_id,group_id):
+            self.create_usergroups(user_id=user_id, group_id=group_id, is_group_admin=1)
+
+    # -------------------- FUNCTIONS ------------------
     def insert(self, message_id, group_id, group_name, user_id, user_name, category, price):
         self.cur.execute("INSERT INTO db VALUES (?,?,?,?,?,?,?)",(message_id, group_id, group_name, user_id, user_name, category, price))
         self.conn.commit()
 
-    def delete(self,group_id, user_id):
+    def delete(self,group_id, user_id,delete_date):
         self.cur.execute(f"select role from usergroups where fk_group_id = {group_id} and fk_user_id = {user_id} ")
         user_role = self.cur.fetchone()[0]
         if user_role == 1:
-            self.cur.execute(f"DELETE FROM userproducts WHERE fk_group_id = {group_id} and EXTRACT(MONTH FROM date_created) = EXTRACT(MONTH FROM CURRENT_DATE)")
-            self.conn.commit()
-
-        return user_role
+            if delete_date == 'latest':
+                query = f'''select *
+           FROM userproducts
+           WHERE fk_group_id = {group_id}
+           ORDER BY "pk_id" DESC
+           LIMIT 1;'''
+                self.cur.execute(query)
+                exepense_id = self.cur.fetchone()[0]
+                self.cur.execute(f"DELETE FROM userproducts WHERE pk_id = {exepense_id}")
+                #self.cur.execute(f"""DELETE FROM userproducts WHERE fk_group_id = {group_id} ORDER BY date_created DESC LIMIT 1)""")
+            elif delete_date == 'today':
+                self.cur.execute(f"DELETE FROM userproducts WHERE fk_group_id = {group_id} and EXTRACT(DAY FROM date_created) = EXTRACT(DAY FROM CURRENT_DATE)")
+            elif delete_date == 'month':
+                self.cur.execute(f"DELETE FROM userproducts WHERE fk_group_id = {group_id} and EXTRACT(MONTH FROM date_created) = EXTRACT(MONTH FROM CURRENT_DATE)")
+            elif delete_date == 'all':
+                self.cur.execute(f"DELETE FROM userproducts WHERE fk_group_id = {group_id}")
+            else:
+                return "invalid format"
+        else:
+            return "Only the admin of the group can delete expenses!"
+        self.conn.commit()
+        
+        return "Succesfuly deleted!"
 
     def toExcel(self, group_id):
         query = f"select u.user_name as user, category_name as category, amount as price from userproducts up join users u on up.fk_user_id = u.pk_id where fk_group_id = {group_id}"
@@ -93,56 +241,6 @@ class Database:
            self.cur.execute(f'SELECT SUM(amount) FROM userproducts where fk_group_id = {group_id}') 
         return self.cur.fetchone()[0]
 
-    def exists(self,user_id, group_id, group_name):
-
-        #check if user exists
-        self.cur.execute(f"select * from users where pk_id = {user_id}")
-        user = self.cur.fetchall()
-        if not user:
-            return "Please enter Email first!"
-            #self.cur.execute("INSERT INTO users (pk_id,user_name,email,is_admin) VALUES (%s, %s, %s, %s)",(user_id, user_name, email, 0))
-            #self.conn.commit()
-        
-        # check if group exists
-        self.cur.execute(f"select * from groups where pk_id = {group_id}")
-        group= self.cur.fetchall()
-        if not group:
-            auth = random.randint(10000,99999)
-            self.cur.execute("INSERT INTO groups (pk_id,group_name,auth) VALUES (%s,%s,%s)",(group_id,group_name,auth))
-            self.conn.commit()
-
-        # check if user is in group:
-        self.cur.execute(f"select * from usergroups where fk_user_id = {user_id} and fk_group_id = {group_id}")
-        usergroups= self.cur.fetchall()
-        if not usergroups:
-            if group:
-                role = 0
-            else:
-                role = 1
-            self.cur.execute("INSERT INTO usergroups (fk_user_id,fk_group_id, role) VALUES (%s, %s, %s)",(user_id, group_id, role))
-            self.conn.commit()
-
-    def add_user(self,user_id,user_name, email):
-        #check if user exists
-
-        email = email.lower()
-        #check if email already in the db:
-        self.cur.execute(f"select * from users where email = '{email}'")
-        email_in_db = self.cur.fetchall()
-        if email_in_db:
-            return "Email already in the db"
-        
-
-        self.cur.execute(f"select * from users where pk_id = {user_id}")
-        user = self.cur.fetchall()
-        if not user:
-            self.cur.execute("INSERT INTO users (pk_id,user_name,email,is_admin) VALUES (%s, %s, %s, %s)",(user_id, user_name, email, 0))
-            self.conn.commit()
-            return "User added"
-        #update 
-        else:
-            return "User already has email"
-
     def breakeven(self, group_id):
         
         self.cur.execute(f"select u.user_name, sum(amount)from userproducts up join users u on up.fk_user_id = u.pk_id where fk_group_id = {group_id} group by u.user_name")
@@ -175,94 +273,7 @@ class Database:
                             b2[1] = 0
         return result
 
-    def get_auth(self, group_id):
-        self.cur.execute(f"select auth from groups where pk_id = {group_id}")
-        row = self.cur.fetchone()[0]
-        return row
-    
-    def create_group(self, group_id, group_name) -> None:
-        ''' create group in 'groups' table '''
-        self.cur.execute(f"INSERT INTO groups (pk_id, group_name) VALUES ('{group_id}', '{group_name}')")
-        self.conn.commit()
-    
-    def is_group_exists(self, group_id) -> None:
-        ''' Check if group exists, return True / False'''
-        #check if group_id exists
-        self.cur.execute(f"select * from groups where pk_id = {group_id}")
-        group = self.cur.fetchall() #return list of tuples
-        if group:
-            return True
-        else:
-            return False
-    
-    def get_password(self, user_id) -> str:
-        ''' Get password from user_id '''
-        #get password following given user_id
-        self.cur.execute(f"select password from users where pk_id = {user_id}")
-        password = self.cur.fetchall()[0][0] #return list of tuples thats why
-        if password:
-            return password
-        else:
-            return None
-        
-    def new_password(self, user_id, password) -> str:
-        ''' set new password for user_id, return None if failed, return password if valid '''
-        #validate password #NOTE: XXX: !NICE TO HAVE! more validation cases
-        if len(password) < 6: return None
-        if len(password) > 40: return None
-        
-        #set new password in db
-        self.cur.execute(f"UPDATE users SET password = '{password}' WHERE pk_id = {user_id}")
-        self.conn.commit()
-        
-        return password
-    
-    
-    def create_user(self, user_id, user_name, email, is_admin) -> str:
-        ''' create user in 'users' table '''
-        random_password = f"{uuid.uuid4()}" #generate new password
-        
-        self.cur.execute(f"INSERT INTO users (pk_id, user_name, email, is_admin, password) VALUES ('{user_id}', '{user_name}', '{(email).lower()}', '{is_admin}', '{random_password}')")
-        self.conn.commit()
-        
-        return random_password
-    
-    def is_user_exists(self, user_id) -> tuple[bool, str]:
-        ''' Check if user exists.\n
-            Return (True, string of the details about the user) if exists,\n
-            Return (False, None) if not exists'''
-            
-        #check if user_id exists
-        self.cur.execute(f"select * from users where pk_id = {user_id}")
-        user = self.cur.fetchall() #return list of tuples
-        if user:
-            return True, user
-        else:
-            return False, None
-        
-    def is_email_exists(self, email) -> bool:
-        ''' Check if email exists '''
-        #check if email exists #NOTE: stupid verification instead of googleAPI to prevent from UI to collapse because of 2 rows with identifiy emails
-        self.cur.execute(f"select * from users where email = {email}")
-        email = self.cur.fetchall() #return list of tuples
-        if email:
-            return True
-        else:
-            return False
-        
-    def create_usergroups(self, user_id, group_id, is_group_admin) -> None:
-        ''' create connection (row) in 'usergroups' table '''
-        self.cur.execute(f"INSERT INTO usergroups (fk_user_id, fk_group_id, role) VALUES ('{user_id}', '{group_id}', '{is_group_admin}')")
-        self.conn.commit()
-        
-    def is_usergroups_row_exists(self, user_id, group_id) -> bool:
-        ''' return True if user-group row is already exists '''
-        self.cur.execute(f"SELECT * FROM usergroups WHERE fk_user_id = {user_id} AND fk_group_id = {group_id}")
-        row = self.cur.fetchall() #return list of tuples
-        if row:
-            return True
-        else:
-            return False
+
     # end of class
 
 
@@ -299,26 +310,19 @@ def write_category(group_id, new_category):
 
 def get_categories(group_id):
     
-    if not open("categories.json").read(1):
-        # file not exists
+    try:
+        with open("categories.json", "r") as f:
+            data = json.load(f)
+            if group_id in data:
+                return data[group_id]
+            return []
+    except:
         data = {}
         json_string = json.dumps(data)
         with open("categories.json", "w") as f:
             f.write(json_string)
         return []
 
-    else:
-        # file is not empty, read JSON file into a dictionary
-        with open("categories.json", "r") as f:
-            try:
-                data = json.load(f)
-            except json.decoder.JSONDecodeError:
-                # file is not in valid JSON format
-                data = {}
-    if group_id in data:
-        return data[group_id]
-    else:
-        return []
 
 def remove_category(group_id, category):
     if not open("categories.json").read(1):
@@ -341,3 +345,20 @@ def remove_category(group_id, category):
     else:
         return "category not exist"
 
+
+def generate_random_username(length=config.LOGIN_NAME_MIN_LENGTH+2):
+    characters = string.ascii_letters + string.digits  # Letters + Digits
+    username = ''.join(random.choice(characters) for _ in range(length))
+    return username
+
+
+def valid_input(input):
+
+    if not input.isnumeric():
+        return "You must enter a number"
+
+    if int(input) < 0:
+        return "Expense must be greater than 0"
+    
+    if int(input) > 10000000:
+        return "Expense must be less than 10,000,000"

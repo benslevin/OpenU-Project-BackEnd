@@ -7,14 +7,16 @@ from typing import \
 
 # load .env file
 load_dotenv()
-
+os.environ["PYTHONIOENCODING"] = "utf-8"
 # BOT Token
 # TOKEN: Final = '5673704938:AAH7bcLtTitCVkmYyoDNSnMTRyvUaI5VsKk' #-Money_Friendly_Bot
 #TOKEN: Final = '6235208308:AAEpoDVVKMXFvsrOiG2_CZibVkEuc5Xx6Xg' #-MoneyMateIL_bot
-TOKEN: Final = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A'
-
+#TOKEN: Final = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A'
+#OKEN = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A' #sadna1_bot
+TOKEN = '6274493416:AAHka4PzyLkVBmdoW-KFXAeCZUf9EuXIHe8'
 # BOT name ro identify in group chats
-BOT_USERNAME: Final = '@sadna1_bot'
+#BOT_USERNAME = '@sadna1_bot'
+BOT_USERNAME = '@MoneyMate_ExpenseBot'
 
 #DB info
 DB_HOST = os.environ.get("DB_HOST", "localhost")
@@ -22,6 +24,7 @@ DB_DATABASE_NAME = os.environ.get("DB_DATABASE_NAME", "postgres")
 DB_USER = os.environ.get("DB_USER", "sadna_admin")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "Password1")
 DB_PORT = os.environ.get("DB_PORT", "5432")
+
 
 # telegram info
 # TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
@@ -39,11 +42,13 @@ class Command(Enum):
     STOP = "stop"  # stops a recurring expense
     LINK = "link"  # send fast UI link (NICE TO HAVE)
     BREAKEVEN = "breakeven"
-    ADDCATEGORY = "add_category"
-    DELETECATEGORY = "delete_category"
+    ADDCATEGORY = "addCategory"
+    DELETECATEGORY = "deleteCategory"
     DASHBOARD = "dashboard"
     GET_PASSOWRD = "getPassword" # send the user his password in private chat
-    NEW_PASSWORD = "newPassword" # give the user the option to change his password
+    SET_PASSWORD = "setPassword" # give the user the option to change his password
+    GET_LOGIN = "getLogin"
+    SET_LOGIN = "setLogin"
     SIGN_IN = "signin" # create user in 'users' table
 
 
@@ -52,7 +57,7 @@ class Button(Enum):
     APPROVE = "Approve ✅"
     CANCEL = "Cancel ❌"
 
-
+# status:
 class Status(Enum):
     APPROVED = "Approved ✅"
     CANCELLED = "Cancelled ❌"
@@ -71,3 +76,10 @@ class Category(Enum):
 
 categories_config = ["food", "gas", "groceries", "shopping", "clothes", "pleasure", "other"]
 categories_config_dict = {"food": "Food 🍔", "gas": "Gas ⛽", "groceries": "Groceries🍎", "shopping": "Shopping🛒", "clothes": "Clothes👕", "pleasure": "Pleasure🎦", "other": "Other"}
+
+
+#GLOBAL VALUES:
+PASSWORD_MAX_LENGTH = 40
+PASSWORD_MIN_LENGTH = 6
+LOGIN_NAME_MAX_LENGTH = 12
+LOGIN_NAME_MIN_LENGTH = 6
