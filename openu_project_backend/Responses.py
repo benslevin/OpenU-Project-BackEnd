@@ -1,4 +1,3 @@
-import re
 
 def responses(input_text):
     user_message = str(input_text).lower()
@@ -6,24 +5,27 @@ def responses(input_text):
     msg = user_message.split()
     return user_message
 
-def get_price(input_text):
-    msg = input_text.split()
-    for s in msg:
-        if s.isnumeric():
-            return s
 
-def get_category(input_text):
-    msg = input_text.split()
-    for s in msg:
-        if not s.isnumeric():
-            return s
+start_response = "Welcome to *MoneyMate* bot!\nThis bot helps you manage and track your expenses in groups.\nFor more information, type /help"
 
-def valid_email(email):
-    if len(email) > 7:
-        if re.match("^.+@(\[?)[a-zA-Z0-9-.]+.([a-zA-Z]{2,3}|[0-9]{1,3})(]?)$", email) != None:
-            return True
-        
 
-start_response = "Welcome to MoneyMate bot!\nThis bot helps you manage and track your expenses in groups.\nFor more information, type /help"
+a = "You can add new expenses, get an overview, adding/removing category, break even between users, export to Excel and more!\n"
+b = "To add new expenses, simply write the amount of the new expence. For exemple '30'.\nThen the bot will ask you to select category.\n"
+c = "Type / to view all the commands\n\n"
+d = "*Commands*:\n\n"
+e = "/stats - see graphs of the expenses\n"
+f = "/delete - delete the last expense you entered.\n"
+ff = "You can also write after the command 'today', 'month' or 'all'. Only the admin of the group can delete the expenses\n"
+g = "/list - get a list of all your expenses\n"
+h = "/export - export the expenses as excel file\n"
+i = "/breakeven - see how much each owes to each other\n"
+j = "addcategory - add new category\n"
+k = "/deletecategory - delete category\n\n"
+l = "*Website* management\n"
+m = "To enter the website and see more details and charts about the group expenses you need to enter user name and password. you can do that with the commands:\n"
+n = "/dashboard - see the dashboard of your groups via our website\n"
+o = "/getlogin - get your login user name\n"
+p = "/setlogin - set your login user name\n"
+q = "/setpassword - set your password\n"
 
-help_response = "Initial setup\nAdd the bot to a group and than you cant start writing expenses.\nFor example, type 50 to add an expense and then select category.\nfor more commands, type / and you will see all the commands\n"
+help_response = a+b+c+d+e+f+ff+g+h+i+j+k+l+m+n+o+p+q
