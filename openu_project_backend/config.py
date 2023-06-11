@@ -8,22 +8,13 @@ from typing import \
 # load .env file
 load_dotenv()
 os.environ["PYTHONIOENCODING"] = "utf-8"
-# BOT Token
-# TOKEN: Final = '5673704938:AAH7bcLtTitCVkmYyoDNSnMTRyvUaI5VsKk' #-Money_Friendly_Bot
-#TOKEN: Final = '6235208308:AAEpoDVVKMXFvsrOiG2_CZibVkEuc5Xx6Xg' #-MoneyMateIL_bot
-#TOKEN: Final = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A'
-#OKEN = '6186969245:AAGNbZJG8cH2etqCiKkhi6zmqZ5X16VrF3A' #sadna1_bot
-TOKEN = '6274493416:AAHka4PzyLkVBmdoW-KFXAeCZUf9EuXIHe8'
-# BOT name ro identify in group chats
-#BOT_USERNAME = '@sadna1_bot'
-BOT_USERNAME = '@MoneyMate_ExpenseBot'
 
 #DB info
-DB_HOST = os.environ.get("DB_HOST", "localhost")
-DB_DATABASE_NAME = os.environ.get("DB_DATABASE_NAME", "postgres")
-DB_USER = os.environ.get("DB_USER", "sadna_admin")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "Password1")
-DB_PORT = os.environ.get("DB_PORT", "5432")
+DB_HOST = os.environ.get("DB_HOST")
+DB_DATABASE_NAME = os.environ.get("DB_DATABASE_NAME")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_PORT = os.environ.get("DB_PORT")
 
 
 # telegram info
